@@ -1,0 +1,744 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Engagement Checker — Influencer-Analyse</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f2f3f5;
+    --card:#ffffff;
+    --text:#17181c;
+    --muted:#6b7280;
+    --line:#e8e9ee;
+    --pink:#ff9ecb;
+    --violet:#c4b5fd;
+    --dark:#17181c;
+    --good:#149963;
+    --warn:#c07c00;
+    --bad:#d64545;
+    --focus:#7c3aed;
+    --r:16px;
+  }
+  @media (prefers-reduced-motion: reduce){ *{animation:none!important;transition:none!important} }
+  *{box-sizing:border-box;margin:0}
+  html{background:var(--bg)}
+  body{
+    font-family:"Inter",system-ui,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    line-height:1.5;
+    padding:28px 20px 90px;
+    font-size:15px;
+  }
+  main{max-width:1080px;margin:0 auto}
+
+  /* ---------- search ---------- */
+  .top{display:flex;flex-direction:column;gap:26px;align-items:center;margin:26px 0 34px;text-align:center}
+  .brand{font-weight:800;font-size:clamp(34px,6vw,52px);letter-spacing:-0.03em;line-height:1.05;margin-bottom:14px}
+  .brand i{font-style:normal;background:linear-gradient(90deg,#7c3aed,#ec4899);-webkit-background-clip:text;background-clip:text;color:transparent}
+  form{width:100%;max-width:560px;display:flex;gap:10px}
+  @media(max-width:520px){
+    form{flex-direction:column}
+    button.cta{width:100%;padding:13px}
+    .brand{font-size:34px}
+    .top{gap:18px;margin:14px 0 24px}
+  }
+  .searchwrap{position:relative;flex:1}
+  input[type=text]{
+    width:100%;
+    font:inherit;font-size:15px;
+    padding:12px 16px;
+    border:1px solid var(--line);
+    border-radius:12px;
+    background:var(--card);
+    color:var(--text);
+    box-shadow:0 1px 2px rgba(20,20,30,.04);
+  }
+  input[type=text]::placeholder{color:#9aa0ab}
+  input[type=text]:focus-visible{outline:2px solid var(--focus);outline-offset:1px}
+  button.cta{
+    font:inherit;font-size:15px;font-weight:700;
+    padding:12px 24px;border:0;border-radius:12px;
+    background:var(--dark);color:#fff;cursor:pointer;
+    transition:transform .1s ease, opacity .1s ease;
+  }
+  button.cta:hover{opacity:.88}
+  button.cta:active{transform:scale(.97)}
+  button.cta:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+  button.cta:disabled{opacity:.5;cursor:wait}
+
+  #suggest{
+    display:none;
+    position:absolute;top:calc(100% + 8px);left:0;right:0;z-index:30;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    box-shadow:0 16px 44px rgba(20,20,40,.14);
+    overflow:hidden;max-height:340px;overflow-y:auto;
+  }
+  .sugg{
+    display:flex;align-items:center;gap:12px;width:100%;text-align:left;
+    padding:11px 14px;border:0;background:transparent;color:var(--text);
+    font:inherit;font-size:14.5px;cursor:pointer;
+  }
+  .sugg:hover,.sugg.active{background:#f4effd}
+  .sugg img{width:36px;height:36px;border-radius:50%;object-fit:cover;flex:none;background:#eee}
+  .sugg .un{font-weight:700}
+  .sugg .fn{color:var(--muted);font-size:13px}
+  .sugg .badge{margin-left:auto;color:#3b82f6;font-size:13px;flex:none}
+  .snote{padding:10px 14px;color:var(--muted);font-size:13px}
+
+  /* ---------- progress & error ---------- */
+  #progress{display:none;margin:2px 0 18px;text-align:center}
+  .loader{
+    position:relative;display:inline-flex;align-items:center;gap:9px;
+    background:#17181c;color:#f4f4f6;
+    font-size:13px;font-weight:500;
+    padding:9px 16px 9px 13px;border-radius:999px;
+    box-shadow:0 6px 20px rgba(20,20,30,.22);
+    overflow:hidden;
+  }
+  .ring{
+    width:15px;height:15px;flex:none;border-radius:50%;
+    border:2px solid rgba(255,255,255,.25);
+    border-top-color:#fff;
+    animation:spin .8s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .scanline{
+    position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.14) 50%,transparent 70%);
+    transform:translateX(-100%);
+    animation:sweep 1.6s ease-in-out infinite;
+  }
+  @keyframes sweep{to{transform:translateX(100%)}}
+  .dots i{font-style:normal;animation:blink 1.2s infinite}
+  .dots i:nth-child(2){animation-delay:.2s}
+  .dots i:nth-child(3){animation-delay:.4s}
+  @keyframes blink{0%,60%,100%{opacity:.15}30%{opacity:1}}
+  .sec{color:#9d9fa8;font-variant-numeric:tabular-nums;margin-left:2px}
+  @media (prefers-reduced-motion: reduce){.ring,.scanline,.dots i{animation:none}}
+  .error{
+    display:none;margin:6px 0 18px;
+    background:#fdecec;border:1px solid #f5c2c2;color:#a33;
+    padding:13px 16px;border-radius:12px;font-size:14.5px;
+  }
+
+  /* ---------- dashboard ---------- */
+  #report{display:none;animation:pop .4s ease}
+  @keyframes pop{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+  .card{
+    background:var(--card);
+    border-radius:var(--r);
+    padding:20px 22px;
+    box-shadow:0 1px 2px rgba(20,20,30,.05);
+  }
+
+  .hero{
+    display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+    padding:8px 16px;
+  }
+  .heromain{min-width:0}
+  .heroside{flex:1;min-width:240px;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+  @media(max-width:700px){.hero{justify-content:center;text-align:center}.heroside{align-items:center}}
+  .statrow{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:14px}
+  @media(max-width:960px){.statrow{grid-template-columns:1fr 1fr}}
+  @media(max-width:560px){
+    .statrow{grid-template-columns:1fr 1fr;gap:10px}
+    .stat{padding:14px 10px}
+    .stat .num{font-size:19px}
+    .stat .lbl{font-size:11.5px}
+    .stat .ic{width:32px;height:32px;font-size:15px;border-radius:9px}
+  }
+
+  .plink{display:flex;align-items:center;gap:14px;color:inherit;text-decoration:none;border-radius:12px;padding:6px 10px;transition:background .12s ease;text-align:left}
+  .plink:hover{background:#f5f3fb}
+  .plink:hover .hd{color:var(--focus)}
+  .plink:focus-visible{outline:2px solid var(--focus)}
+  .plink img{width:46px;height:46px;border-radius:50%;object-fit:cover;background:#eee;flex:none}
+  .nm{font-size:16.5px;font-weight:800;letter-spacing:-0.015em;line-height:1.2}
+  .hd{color:var(--muted);font-size:14px;margin-top:2px}
+  .hd b{color:var(--text);font-size:15.5px;font-weight:800}
+  .vbadge{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;color:#0095f6;vertical-align:2px}
+  .vbadge.no{color:var(--muted)}
+  .vbadge svg{width:16px;height:16px}
+  
+  .stat{display:flex;flex-direction:column;gap:10px;justify-content:center;align-items:center;text-align:center}
+  .stat .ic{
+    width:38px;height:38px;border-radius:11px;
+    display:grid;place-items:center;font-size:17px;
+    background:#f1f2f5;
+  }
+  .stat .num{font-size:24px;font-weight:800;letter-spacing:-0.02em}
+  .stat .lbl{color:var(--muted);font-size:13.5px;margin-top:-6px}
+  .stat.hl{background:var(--pink);box-shadow:0 6px 20px rgba(236,72,153,.25)}
+  .stat.hl .ic{background:var(--dark);color:#fff}
+  .stat.hl .lbl{color:#5c1436}
+
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;align-items:stretch}
+  @media(max-width:860px){.row2{grid-template-columns:1fr}}
+  .rcol{display:flex;flex-direction:column;gap:14px}
+  .rcol .card:first-child{flex:1}
+  .rcol .card:last-child{flex:none}
+  .card.compact{padding:14px 18px}
+  .card.compact h3{font-size:13.5px;margin-bottom:10px}
+  .card h3{font-size:15.5px;font-weight:700;margin-bottom:14px;text-align:center}
+
+  /* histogram */
+  .histo{display:flex;align-items:flex-end;gap:3px;height:48px;padding-top:16px}
+  .hcol{flex:1;position:relative;display:flex;flex-direction:column;justify-content:flex-end;height:100%}
+  .hbar{border-radius:4px;background:#ededf0;width:100%}
+  .hbar.median{background:var(--dark)}
+  .hbar.you{background:var(--violet)}
+  .hcol .mark{position:absolute;top:-2px;left:50%;transform:translateX(-50%)}
+  .hcol .mark img{width:14px;height:14px;border-radius:50%;object-fit:cover;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.25);background:#eee}
+  .hfoot{display:flex;gap:3px;margin-top:4px}
+  .hfoot span{flex:1;text-align:center;font-size:8px;color:#a3a8b3}
+  .hdetail{text-align:center;color:var(--muted);font-size:10.5px;margin-top:6px;line-height:1.55}
+  .hdetail b{color:var(--text)}
+
+  /* reels */
+  .reel{display:flex;justify-content:space-between;gap:12px;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px}
+  .reel:last-child{border-bottom:0}
+  .reel a{color:var(--text);font-weight:500;text-decoration:underline;text-decoration-color:#c9cdd6;text-underline-offset:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:70%}
+  .reel a:hover{text-decoration-color:var(--text)}
+  .reel .plays{font-weight:700;white-space:nowrap;font-size:13px}
+  .mutednote{color:var(--muted);font-size:13.5px}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+  @media(max-width:700px){.chips{justify-content:center}}
+  .chip{background:#f1edfb;color:#5b21b6;font-weight:600;font-size:12px;padding:4px 11px;border-radius:999px}
+  .chip.ig{background:#e7f3ff;color:#0b6fc2}
+  .bio{color:var(--muted);font-size:12.5px;text-align:right;max-width:52ch;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin:0}
+  @media(max-width:700px){.bio{text-align:center}}
+
+
+  /* trust */
+  .trustcard{display:flex;flex-direction:column;align-items:center;text-align:center}
+  .trustcard .gauge{margin-bottom:12px}
+  .verdict{color:var(--muted);font-size:14px;max-width:44ch;margin-bottom:12px}
+  .verdict b{color:var(--text)}
+  .tsum{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:8px}
+  .tsum span{font-size:12px;font-weight:700;padding:4px 11px;border-radius:999px}
+  .tsum .g{background:#e3f6ee;color:var(--good)}
+  .tsum .w{background:#fdf3df;color:#8a5a00}
+  .tsum .b{background:#fdeaea;color:var(--bad)}
+  .tbasis{color:#9aa0ab;font-size:11.5px;margin-bottom:10px}
+  #flags{width:100%;text-align:left}
+  .gauge{
+    --pct:0; --col:var(--good);
+    width:112px;height:112px;flex:none;border-radius:50%;
+    background:conic-gradient(var(--col) calc(var(--pct)*1%), #efeff3 0);
+    display:grid;place-items:center;
+  }
+  .gauge > div{width:86px;height:86px;border-radius:50%;background:var(--card);display:grid;place-items:center;text-align:center}
+  .gauge b{font-size:28px;font-weight:800;line-height:1;color:var(--col)}
+  .gauge small{color:var(--muted);font-size:11px}
+  .flag{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--line)}
+  .dot{width:9px;height:9px;border-radius:50%;flex:none;margin-top:7px}
+  .flag.good .dot{background:var(--good)}
+  .flag.warn .dot{background:var(--warn)}
+  .flag.bad .dot{background:var(--bad)}
+  .flag b{display:block;font-size:13.5px}
+  .flag span{color:var(--muted);font-size:12.5px}
+
+
+  @media(max-width:560px){
+    body{padding:16px 12px 60px}
+    .card{padding:16px}
+    .card.compact{padding:12px 14px}
+    .hero{padding:10px 12px;gap:12px}
+    .heroside{min-width:100%}
+    .bio{text-align:center;max-width:100%}
+    .chips{justify-content:center}
+    .row2{gap:10px;margin-top:10px}
+    .rcol{gap:10px}
+    .verdict{font-size:13px}
+    .reel a{max-width:62%}
+    .hd{font-size:13px}
+  }
+  footer{margin-top:40px;color:#a7acb6;font-size:11px;max-width:64ch;margin-left:auto;margin-right:auto;text-align:center}
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <span class="brand">Engagement <i>Checker</i></span>
+    <form id="form">
+      <div class="searchwrap">
+        <input id="username" type="text" placeholder="@benutzername oder Instagram-Link einfügen" autocomplete="off" aria-label="Instagram-Benutzername oder Profil-Link" role="combobox" aria-expanded="false" aria-controls="suggest" required>
+        <div id="suggest" role="listbox"></div>
+      </div>
+      <button class="cta" id="go" type="submit">Analysieren</button>
+    </form>
+  </div>
+
+  <div id="progress">
+    <div class="loader" role="status">
+      <span class="ring" aria-hidden="true"></span>
+      <span class="scanline" aria-hidden="true"></span>
+      <span id="pmsg">Scan startet</span><span class="dots" aria-hidden="true"><i>.</i><i>.</i><i>.</i></span>
+      <span class="sec" id="psec">0s</span>
+    </div>
+  </div>
+  <div class="error" id="error"></div>
+
+  <section id="report" aria-live="polite">
+
+    <div class="card hero">
+      <a id="profileLink" class="plink" href="#" target="_blank" rel="noopener" aria-label="Instagram-Profil öffnen">
+        <img id="avatar" alt="" referrerpolicy="no-referrer">
+        <div class="heromain">
+          <div class="nm"><span id="fullname"></span> <span id="vbadge"></span></div>
+          <div class="hd"><span id="handle"></span> · <b id="followersShort"></b> Follower · <b id="followingShort"></b> Gefolgt</div>
+        </div>
+      </a>
+      <div class="heroside">
+        <div class="chips" id="chips"></div>
+        <p class="bio" id="bio"></p>
+      </div>
+    </div>
+
+    <div class="statrow">
+      <div class="card stat hl">
+        <span class="ic">📈</span>
+        <span class="num" id="erNum">–</span>
+        <span class="lbl">Engagement-Rate</span>
+      </div>
+      <div class="card stat">
+        <span class="ic">❤️</span>
+        <span class="num" id="likesNum">–</span>
+        <span class="lbl">Durchschnittliche Likes</span>
+      </div>
+      <div class="card stat">
+        <span class="ic">💬</span>
+        <span class="num" id="commentsNum">–</span>
+        <span class="lbl">Durchschnittliche Kommentare</span>
+      </div>
+      <div class="card stat">
+        <span class="ic">▶️</span>
+        <span class="num" id="playsNum">–</span>
+        <span class="lbl">Durchschnittliche Reel-Aufrufe</span>
+      </div>
+    </div>
+
+    <div class="row2">
+      <div class="card trustcard">
+        <h3>Vertrauens-Score</h3>
+        <div class="gauge" id="gauge"><div><b id="score">–</b><small>von 100</small></div></div>
+        <p class="verdict" id="verdictText"></p>
+        <div class="tsum" id="tsum"></div>
+        <p class="tbasis" id="tbasis"></p>
+        <div id="flags"></div>
+      </div>
+      <div class="rcol">
+        <div class="card compact">
+          <h3>Top-Reels nach Aufrufen</h3>
+          <div id="reels"></div>
+        </div>
+        <div class="card compact">
+          <h3>Engagement-Rate im Vergleich</h3>
+          <div class="histo" id="histo"></div>
+          <div class="hfoot" id="hfoot"></div>
+          <p class="hdetail" id="hdetail"></p>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <footer>Datenbasis: öffentliches Profil und die letzten Beiträge. Engagement-Benchmarks variieren je nach Nische — nutze das Ergebnis als ersten Filter, nicht als endgültiges Urteil.</footer>
+</main>
+
+<script>
+const form = document.getElementById("form");
+const FN = "/analyze";
+
+/* ---------- Live-Suche ---------- */
+const input = document.getElementById("username");
+const suggBox = document.getElementById("suggest");
+let debounce = null, activeIdx = -1, blockedCount = 0, lastQuery = "";
+
+input.addEventListener("input", () => {
+  const q = input.value.trim();
+  clearTimeout(debounce);
+  activeIdx = -1;
+  if (q.length < 2 || /instagram\.com|^https?:/i.test(q)) return closeSuggest();
+  debounce = setTimeout(() => runSearch(q.replace(/^@/, "")), 350);
+});
+
+async function runSearch(q){
+  lastQuery = q;
+  try {
+    const res = await fetch(`/search?q=${encodeURIComponent(q)}`);
+    const data = await res.json();
+    if (q !== lastQuery) return;
+    if (data.blocked) {
+      blockedCount++;
+      suggBox.innerHTML = `
+        <div class="snote">Instagram blockiert die Schnellsuche auf deiner Verbindung.</div>
+        <button type="button" class="sugg" id="deepBtn"><span>🔎 <b>Konto-Suche über Apify starten</b> — dauert ca. 20–40 Sekunden</span></button>`;
+      openSuggest();
+      document.getElementById("deepBtn").addEventListener("click", () => runDeepSearch(q));
+      return;
+    }
+    blockedCount = 0;
+    renderUsers(data.users, q);
+  } catch(e){ closeSuggest(); }
+}
+
+function renderUsers(users, q){
+  if (!users || users.length === 0) {
+    suggBox.innerHTML = `<div class="snote">Keine Konten gefunden für „${esc(q)}"</div>`;
+    return openSuggest();
+  }
+  suggBox.innerHTML = users.map(u => `
+    <button type="button" class="sugg" role="option" data-username="${esc(u.username)}">
+      <img alt="" data-pic="${esc(u.pic || "")}">
+      <span><span class="un">@${esc(u.username)}</span><br><span class="fn">${esc(u.fullName || "")}</span></span>
+      ${u.verified ? '<span class="badge">✔ verifiziert</span>' : ""}
+    </button>`).join("");
+  openSuggest();
+  suggBox.querySelectorAll(".sugg").forEach(btn => {
+    btn.addEventListener("click", () => pickSuggestion(btn.dataset.username));
+    const im = btn.querySelector("img[data-pic]");
+    if (im) {
+      const src = im.dataset.pic;
+      if (src) loadInto(im, picChain(src.startsWith("data:") ? src : null, src.startsWith("data:") ? null : src));
+      else im.style.visibility = "hidden";
+    }
+  });
+}
+
+async function runDeepSearch(q){
+  suggBox.innerHTML = `<div class="snote">⏳ Apify durchsucht Instagram nach „${esc(q)}" — einen Moment…</div>`;
+  openSuggest();
+  try {
+    const res = await fetch(`/deepsearch?q=${encodeURIComponent(q)}`);
+    const data = await res.json();
+    if (data.error) { suggBox.innerHTML = `<div class="snote">Suche fehlgeschlagen: ${esc(data.error)}</div>`; return openSuggest(); }
+    renderUsers(data.users, q);
+  } catch(e){
+    suggBox.innerHTML = `<div class="snote">Suche fehlgeschlagen — bitte Benutzernamen direkt eingeben.</div>`;
+    openSuggest();
+  }
+}
+
+function pickSuggestion(username){
+  input.value = "@" + username;
+  closeSuggest();
+  form.requestSubmit();
+}
+
+input.addEventListener("keydown", (e) => {
+  const open = suggBox.style.display === "block";
+  const items = open ? [...suggBox.querySelectorAll(".sugg")] : [];
+  if (e.key === "Enter") {
+    e.preventDefault();
+    clearTimeout(debounce);
+    if (open && activeIdx >= 0 && items[activeIdx]?.dataset.username) {
+      pickSuggestion(items[activeIdx].dataset.username);
+    } else {
+      closeSuggest();
+      form.requestSubmit();       // Enter startet die Analyse direkt
+    }
+    return;
+  }
+  if (!items.length) return;
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+    e.preventDefault();
+    activeIdx = e.key === "ArrowDown" ? (activeIdx + 1) % items.length : (activeIdx - 1 + items.length) % items.length;
+    items.forEach((el,i) => el.classList.toggle("active", i === activeIdx));
+    items[activeIdx].scrollIntoView({ block: "nearest" });
+  } else if (e.key === "Escape") closeSuggest();
+});
+document.addEventListener("click", (e) => { if (!e.target.closest(".searchwrap")) closeSuggest(); });
+function openSuggest(){ suggBox.style.display = "block"; input.setAttribute("aria-expanded","true"); }
+function closeSuggest(){ suggBox.style.display = "none"; input.setAttribute("aria-expanded","false"); activeIdx = -1; }
+
+/* ---------- Analyse ---------- */
+function parseHandle(raw){
+  let s = String(raw || "").trim();
+  try {
+    if (/instagram\.com/i.test(s)) {
+      if (!/^https?:\/\//i.test(s)) s = "https://" + s;
+      const u = new URL(s);
+      s = u.pathname.split("/").filter(Boolean)[0] || "";
+    }
+  } catch(e){}
+  return s.replace(/^@/, "");
+}
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById("go");
+  const handle = parseHandle(input.value);
+  if (!handle) return showError("Das sieht weder nach einem Benutzernamen noch nach einem Instagram-Link aus.");
+
+  btn.disabled = true;
+  closeSuggest();
+  hideError();
+  document.getElementById("report").style.display = "none";
+  startProgress(`@${handle} wird gescannt`);
+
+  try {
+    const start = await getJSON(`${FN}?action=start&username=${encodeURIComponent(handle)}`);
+    const runId = start.runId;
+    let status = "RUNNING", tries = 0;
+    while (["RUNNING","READY"].includes(status)) {
+      if (++tries > 80) throw new Error("Zeitüberschreitung bei Apify. Versuch es in einer Minute nochmal.");
+      await sleep(1500);
+      tickProgress(Math.round(tries * 1.5), "Profildaten werden gesammelt");
+      const s = await getJSON(`${FN}?action=status&runId=${runId}`);
+      status = s.status;
+    }
+    if (status !== "SUCCEEDED") throw new Error("Der Scan ist fehlgeschlagen — existiert das Konto wirklich?");
+    tickProgress(null, "Zahlen werden ausgewertet");
+    const items = await getJSON(`${FN}?action=results&runId=${runId}`);
+    const profile = Array.isArray(items) ? items[0] : null;
+    if (!profile || profile.error) throw new Error("Keine Daten gefunden — Konto existiert nicht oder ist privat.");
+    stopProgress();
+    render(profile);
+  } catch (err) {
+    stopProgress();
+    showError(err.message);
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+function render(p) {
+  const followers = p.followersCount ?? 0;
+  const following = p.followsCount ?? 0;
+  const posts = p.postsCount ?? 0;
+  const latest = (p.latestPosts || []).filter(x => typeof x.likesCount === "number");
+  const reels = (p.latestPosts || []).filter(x => {
+    const plays = x.videoPlayCount ?? x.videoViewCount ?? x.playCount;
+    return typeof plays === "number" && plays > 0;
+  }).map(x => ({
+    plays: x.videoPlayCount ?? x.videoViewCount ?? x.playCount,
+    caption: (x.caption || "Reel ohne Beschriftung").slice(0, 42),
+    url: x.url || (x.shortCode ? `https://www.instagram.com/p/${x.shortCode}/` : null),
+  })).sort((a,b) => b.plays - a.plays);
+
+  const avgLikes = avg(latest.map(x => x.likesCount));
+  const avgComments = avg(latest.map(x => x.commentsCount ?? 0));
+  const avgPlays = reels.length ? avg(reels.map(r => r.plays)) : 0;
+  const er = followers > 0 ? ((avgLikes + avgComments) / followers) * 100 : 0;
+  const commentRatio = avgLikes > 0 ? (avgComments / avgLikes) * 100 : 0;
+
+  let band;
+  if (followers < 10_000)         band = [2.5, 8];
+  else if (followers < 100_000)   band = [1.8, 5];
+  else if (followers < 1_000_000) band = [1.2, 3.5];
+  else                            band = [0.8, 2.5];
+
+  /* --- Kopfzeile & Kennzahlen --- */
+  const img = document.getElementById("avatar");
+  const picSources = picChain(p.picData, p.profilePicUrlHD || p.profilePicUrl);
+  if (picSources.length) { img.style.visibility = "visible"; loadInto(img, picSources); }
+  else img.style.visibility = "hidden";
+
+  document.getElementById("fullname").textContent = p.fullName || p.username;
+  const igBadge = '<svg viewBox="0 0 40 40" aria-hidden="true"><path fill="#0095f6" d="M19.998 3.094 14.638 0l-2.972 5.15H5.432v6.354L0 14.64 3.094 20 0 25.359l5.432 3.137v5.905h5.975L14.638 40l5.36-3.094L25.358 40l3.232-5.6h6.162v-6.01L40 25.359 36.905 20 40 14.641l-5.248-3.03V5.15h-6.419L25.358 0l-5.36 3.094Z"/><path fill="#fff" d="m28.86 13.755-11.7 11.7-5.687-5.686 1.964-1.964 3.723 3.723 9.736-9.737 1.964 1.964Z"/></svg>';
+  document.getElementById("vbadge").innerHTML = p.verified
+    ? '<span class="vbadge">' + igBadge + ' Verifiziert</span>'
+    : '<span class="vbadge no">Nicht verifiziert</span>';
+  document.getElementById("handle").textContent = "@" + p.username;
+  document.getElementById("profileLink").href = "https://www.instagram.com/" + encodeURIComponent(p.username) + "/";
+  document.getElementById("followersShort").textContent = fmtShort(followers);
+  document.getElementById("followingShort").textContent = fmtShort(following);
+
+  /* --- Profil-Info: Kategorie & Nische --- */
+  const chips = [];
+  const igCat = p.businessCategoryName || p.category || p.categoryName;
+  if (igCat) chips.push(`<span class="chip ig">${esc(igCat)}</span>`);
+  detectNiches(p, latest).forEach(n => chips.push(`<span class="chip">${esc(n)}</span>`));
+  const bioText = (p.biography || "").trim();
+  document.getElementById("chips").innerHTML = chips.join("");
+  document.getElementById("bio").textContent = bioText;
+  document.getElementById("erNum").textContent = latest.length ? er.toFixed(2).replace(".", ",") + " %" : "–";
+  document.getElementById("likesNum").textContent = latest.length ? fmtShort(avgLikes) : "–";
+  document.getElementById("commentsNum").textContent = latest.length ? fmtShort(avgComments) : "–";
+  document.getElementById("playsNum").textContent = reels.length ? fmtShort(avgPlays) : "–";
+
+  /* --- Histogramm --- */
+  buildHistogram(er, band, picChain(p.picData, p.profilePicUrlHD || p.profilePicUrl));
+
+  /* --- Reels --- */
+  const reelBox = document.getElementById("reels");
+  reelBox.innerHTML = reels.length
+    ? reels.slice(0,6).map(r => `
+        <div class="reel">
+          ${r.url ? `<a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.caption)}</a>` : `<span>${esc(r.caption)}</span>`}
+          <span class="plays">${fmtShort(r.plays)}</span>
+        </div>`).join("")
+    : `<p class="mutednote">Keine Reels mit Aufrufzahlen in den letzten Beiträgen gefunden.</p>`;
+
+  /* --- Score & Flags --- */
+  const flags = [];
+  let score = 100;
+  if (p.private) flags.push(["warn","Privates Konto","Beiträge sind nicht öffentlich — das Engagement lässt sich nur eingeschränkt messen."]);
+  if (p.verified) flags.push(["good","Verifiziertes Konto","Meta hat die Identität dieses Kontos bestätigt."]);
+  if (latest.length === 0) {
+    score -= 35;
+    flags.push(["warn","Keine aktuellen Beitragsdaten","Die letzten Beiträge konnten nicht gelesen werden — der Score basiert nur auf der Profilform."]);
+  } else {
+    if (er < band[0] * 0.5) { score -= 40; flags.push(["bad","Engagement weit unter normal",`${er.toFixed(2)} % statt gesunder ${band[0]}–${band[1]} % bei dieser Kontogröße. Typisches Zeichen für gekaufte oder tote Follower.`]); }
+    else if (er < band[0]) { score -= 15; flags.push(["warn","Engagement unterdurchschnittlich",`${er.toFixed(2)} % liegt unter dem gesunden Bereich von ${band[0]}–${band[1]} %.`]); }
+    else if (er > band[1] * 3) { score -= 15; flags.push(["warn","Engagement auffällig hoch",`${er.toFixed(2)} % ist mehr als das Dreifache des Normalwerts — möglicher Hinweis auf Engagement-Gruppen oder Gewinnspiele.`]); }
+    else flags.push(["good","Engagement im gesunden Bereich",`${er.toFixed(2)} % liegt im erwarteten Bereich von ${band[0]}–${band[1]} %.`]);
+    if (commentRatio < 0.5 && avgLikes > 200) { score -= 20; flags.push(["bad","Likes ohne Gespräche",`Nur ${commentRatio.toFixed(1)} Kommentare pro 100 Likes — gekaufte Likes kommen meist ohne Kommentare.`]); }
+    else if (commentRatio >= 1) flags.push(["good","Echte Unterhaltungen",`${commentRatio.toFixed(1)} Kommentare pro 100 Likes — das Publikum redet wirklich mit.`]);
+  }
+  if (following > 3000 && following > followers * 1.5) { score -= 15; flags.push(["warn","Follow-für-Follow-Muster",`Folgt selbst ${fmt(following)} Konten — oft künstlich aufgebaute Reichweite.`]); }
+  if (followers > 50_000 && posts < 30) { score -= 15; flags.push(["warn","Großes Publikum, dünne Historie",`${fmt(followers)} Follower bei nur ${posts} Beiträgen ist ungewöhnlich.`]); }
+  score = Math.max(0, Math.min(100, score));
+
+  const [col, text] =
+    score >= 80 ? ["var(--good)","<b>Sieht echt aus.</b> Die Werte passen zu einem realen, aktiven Publikum."] :
+    score >= 60 ? ["var(--good)","<b>Weitgehend gesund.</b> Ein paar Schwachstellen, aber nichts, das nach Fake schreit."] :
+    score >= 40 ? ["var(--warn)","<b>Mit Vorsicht.</b> Gemischte Signale — lass dir vor einer Zahlung Insights-Screenshots zeigen."] :
+    score >= 20 ? ["var(--bad)","<b>Hohes Risiko.</b> Mehrere Muster passen zu Konten mit gekauften Followern."] :
+                  ["var(--bad)","<b>Finger weg.</b> Die Zahlen passen nicht zusammen — dieses Publikum ist sehr wahrscheinlich nicht echt."];
+
+  const gauge = document.getElementById("gauge");
+  gauge.style.setProperty("--col", col);
+  gauge.style.setProperty("--pct", 0);
+  animateGauge(gauge, score);
+  document.getElementById("score").textContent = score;
+  document.getElementById("score").style.color = col;
+  document.getElementById("verdictText").innerHTML = text;
+  const nG = flags.filter(f=>f[0]==="good").length, nW = flags.filter(f=>f[0]==="warn").length, nB = flags.filter(f=>f[0]==="bad").length;
+  document.getElementById("tsum").innerHTML =
+    `<span class="g">${nG} positiv</span><span class="w">${nW} Hinweis${nW===1?"":"e"}</span><span class="b">${nB} kritisch</span>`;
+  document.getElementById("tbasis").textContent =
+    `Basis: ${latest.length} aktuelle Beiträge · Benchmark ${band[0]}–${band[1]} % für ${fmtShort(followers)} Follower`;
+  document.getElementById("flags").innerHTML = flags
+    .map(([lvl,head,body]) => `<div class="flag ${lvl}"><span class="dot"></span><div><b>${head}</b><span>${body}</span></div></div>`).join("");
+
+  document.getElementById("report").style.display = "block";
+}
+
+/* Histogramm: 10 ER-Bereiche, typische Verteilung, Median der Kontogröße schwarz, dieses Konto violett */
+function buildHistogram(er, band, pic){
+  const median = (band[0] + band[1]) / 2;
+  const maxEdge = Math.max(band[1] * 1.6, er * 1.15, 1);
+  const N = 14;
+  const step = maxEdge / N;
+  // rechtsschiefe Verteilung über 14 Bereiche
+  const heights = [46, 78, 100, 92, 76, 61, 48, 38, 30, 24, 19, 15, 12, 9];
+  const youIdx = Math.min(N-1, Math.floor(er / step));
+  const medIdx = Math.min(N-1, Math.floor(median / step));
+  const histo = document.getElementById("histo");
+  const hfoot = document.getElementById("hfoot");
+  histo.innerHTML = heights.map((h,i) => {
+    const cls = i === youIdx ? "you" : (i === medIdx ? "median" : "");
+    const mark = i === youIdx && pic && pic.length ? `<span class="mark"><img alt="" data-mark="1"></span>` : "";
+    return `<div class="hcol">${mark}<div class="hbar ${cls}" style="height:${h}%"></div></div>`;
+  }).join("");
+  const markImg = histo.querySelector('img[data-mark]');
+  if (markImg) loadInto(markImg, pic, "display");
+  hfoot.innerHTML = heights.map((_,i) => {
+    const from = (i*step).toFixed(1).replace(".", ",");
+    return `<span>${i % 4 === 0 ? from : ""}</span>`;
+  }).join("");
+  document.getElementById("hdetail").innerHTML =
+    `<span style="color:#8b5cf6">■</span> Dieses Konto: <b>${er.toFixed(2).replace(".", ",")} %</b> · <span style="color:#17181c">■</span> Median: <b>${median.toFixed(1).replace(".", ",")} %</b><br>Gesunder Bereich: <b>${String(band[0]).replace(".", ",")}–${String(band[1]).replace(".", ",")} %</b>`;
+}
+
+/* Einfache Nischen-Erkennung aus Bio + Beitragstexten */
+function detectNiches(p, latest){
+  const text = ((p.biography || "") + " " + latest.map(x => x.caption || "").join(" ")).toLowerCase();
+  const map = [
+    ["Mode & Fashion", ["fashion","mode","outfit","ootd","style","kleidung","streetwear"]],
+    ["Beauty", ["beauty","makeup","make-up","skincare","kosmetik","hautpflege","lashes","nails"]],
+    ["Fitness", ["fitness","gym","workout","training","muskel","bodybuilding","abnehmen"]],
+    ["Reisen", ["travel","reisen","wanderlust","urlaub","weltreise","backpack"]],
+    ["Food", ["food","rezept","recipe","kochen","essen","foodie","baking","backen"]],
+    ["Familie", ["mom","mama","dad","papa","family","familie","kids","baby"]],
+    ["Gaming", ["gaming","gamer","twitch","esports","playstation","xbox","nintendo"]],
+    ["Tech", ["tech","technik","gadget","smartphone","software","ki ","ai ","coding"]],
+    ["Musik", ["musik","music","dj","song","album","spotify","konzert"]],
+    ["Sport", ["fußball","football","soccer","basketball","tennis","athlet","verein"]],
+    ["Business", ["business","unternehmer","entrepreneur","marketing","finanzen","invest","immobilien"]],
+    ["Kunst & Foto", ["art","kunst","fotografie","photography","illustration","design","maler"]],
+    ["Lifestyle", ["lifestyle","daily","alltag","inspiration","vlog"]],
+  ];
+  const found = [];
+  for (const [label, words] of map) {
+    if (words.some(w => text.includes(w))) found.push(label);
+    if (found.length >= 3) break;
+  }
+  return found;
+}
+
+function animateGauge(el, target){
+  let cur = 0;
+  const step = () => {
+    cur = Math.min(target, cur + Math.max(1, target/30));
+    el.style.setProperty("--pct", cur);
+    if (cur < target) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+function startProgress(msg){
+  document.getElementById("progress").style.display = "block";
+  document.getElementById("pmsg").textContent = msg;
+  document.getElementById("psec").textContent = "0s";
+}
+function tickProgress(sec, msg){
+  if (msg) document.getElementById("pmsg").textContent = msg;
+  if (sec != null) document.getElementById("psec").textContent = sec + "s";
+}
+function stopProgress(){ document.getElementById("progress").style.display = "none"; }
+function showError(msg){ const e = document.getElementById("error"); e.textContent = msg; e.style.display = "block"; }
+function hideError(){ document.getElementById("error").style.display = "none"; }
+
+function avg(a){ return a.length ? a.reduce((x,y)=>x+y,0)/a.length : 0; }
+function fmt(n){ return new Intl.NumberFormat("de-DE").format(Math.round(n)); }
+function fmtShort(n){
+  n = Math.round(n);
+  if (n >= 1_000_000) return (n/1_000_000).toFixed(1).replace(".", ",") + " Mio.";
+  if (n >= 1_000) return (n/1_000).toFixed(1).replace(".", ",") + "k";
+  return String(n);
+}
+function weserv(u){ return "https://images.weserv.nl/?url=" + encodeURIComponent(u.replace(/^https?:\/\//, "")); }
+function picChain(dataUri, url){
+  const list = [];
+  if (dataUri && dataUri.startsWith("data:")) list.push(dataUri);
+  if (url) { list.push(weserv(url)); list.push(proxyImg(url)); }
+  else if (dataUri && !dataUri.startsWith("data:")) { list.push(weserv(dataUri)); list.push(proxyImg(dataUri)); }
+  return list;
+}
+function loadInto(el, sources, hideMode){
+  let i = 0;
+  const next = () => {
+    if (i >= sources.length) { el.style[hideMode || "visibility"] = hideMode === "display" ? "none" : "hidden"; return; }
+    el.src = sources[i++];
+  };
+  el.onerror = next;
+  next();
+}
+function proxyImg(u){ return u ? "/img?u=" + encodeURIComponent(u) : ""; }
+function esc(s){ return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+async function getJSON(url){
+  const res = await fetch(url);
+  const text = await res.text();
+  let data;
+  try { data = JSON.parse(text); }
+  catch(e) {
+    throw new Error(res.status === 404 || !text
+      ? "Server-Funktion nicht gefunden — die Functions fehlen im Deployment. Bitte per »wrangler pages deploy« oder Git deployen (Drag-&-Drop unterstützt keine Functions)."
+      : "Server antwortete unerwartet (HTTP " + res.status + ").");
+  }
+  if (!res.ok) throw new Error(data.error || "Anfrage fehlgeschlagen.");
+  return data;
+}
+</script>
+</body>
+</html>
