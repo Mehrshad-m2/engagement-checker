@@ -6,5 +6,14 @@
   "assets": {
     "directory": "./public",
     "binding": "ASSETS"
-  }
+  },
+  // Secrets-Store-Binding hier deklarieren, damit es JEDES Deployment überlebt.
+  // STORE_ID_HIER_EINFUEGEN ersetzen (Dashboard -> Secrets Store -> Store öffnen -> ID kopieren)
+  "secrets_store_secrets": [
+    {
+      "binding": "APIFY_TOKEN",
+      "store_id": "e1aafef4c6684b0492ce9f2f8a093385",
+      "secret_name": "APIFY_TOKEN"
+    }
+  ]
 }
