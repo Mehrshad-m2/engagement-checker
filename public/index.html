@@ -3,7 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Engagement Checker — Influencer-Analyse</title>
+<title>Engageify</title>
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="Engageify">
+<meta name="theme-color" content="#f2f3f5">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -37,7 +42,8 @@
 
   /* ---------- search ---------- */
   .top{display:flex;flex-direction:column;gap:26px;align-items:center;margin:26px 0 34px;text-align:center}
-  .brand{font-weight:800;font-size:clamp(34px,6vw,52px);letter-spacing:-0.03em;line-height:1.05;margin-bottom:14px}
+  .brand{font-weight:800;font-size:clamp(34px,6vw,52px);letter-spacing:-0.03em;line-height:1.05}
+  .tagline{display:block;color:#6b7280;font-size:clamp(13px,2.2vw,15.5px);font-weight:500;margin:6px 0 14px;letter-spacing:.01em}
   .brand i{font-style:normal;background:linear-gradient(90deg,#7c3aed,#ec4899);-webkit-background-clip:text;background-clip:text;color:transparent}
   form{width:100%;max-width:560px;display:flex;gap:10px}
   @media(max-width:520px){
@@ -267,7 +273,8 @@
 <body>
 <main>
   <div class="top">
-    <span class="brand">Engagement <i>Checker</i></span>
+    <span class="brand">Engage<i>ify</i></span>
+    <span class="tagline">Instagram Engagement Rate Calculator</span>
     <form id="form">
       <div class="searchwrap">
         <input id="username" type="text" placeholder="@benutzername oder Instagram-Link einfügen" autocomplete="off" aria-label="Instagram-Benutzername oder Profil-Link" role="combobox" aria-expanded="false" aria-controls="suggest" required>
