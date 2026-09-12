@@ -29,6 +29,8 @@
   }
   @media (prefers-reduced-motion: reduce){ *{animation:none!important;transition:none!important} }
   *{box-sizing:border-box;margin:0}
+  html,body{max-width:100%;overflow-x:hidden}
+  img,svg{max-width:100%}
   html{background:var(--bg)}
   body{
     font-family:"Inter",system-ui,sans-serif;
@@ -38,7 +40,8 @@
     padding:28px 20px 90px;
     font-size:15px;
   }
-  main{max-width:1080px;margin:0 auto}
+  main{width:100%;max-width:1080px;margin-inline:auto}
+  .hero,.statrow,.row2,.rcol,#report > .card{width:100%}
 
   /* ---------- search ---------- */
   .top{display:flex;flex-direction:column;gap:26px;align-items:center;margin:26px 0 34px;text-align:center}
@@ -148,9 +151,11 @@
     padding:8px 16px;
   }
   .heromain{min-width:0}
-  .heroside{flex:1;min-width:240px;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+  .nm,.hd{overflow-wrap:anywhere}
+  .heroside{flex:1;min-width:0;flex-basis:240px;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
   @media(max-width:700px){.hero{justify-content:center;text-align:center}.heroside{align-items:center}}
   .statrow{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:14px}
+  .statrow > .card,.row2 > *,.rcol > .card{min-width:0}
   @media(max-width:960px){.statrow{grid-template-columns:1fr 1fr}}
   @media(max-width:560px){
     .statrow{grid-template-columns:1fr 1fr;gap:10px}
@@ -185,7 +190,7 @@
   .stat.hl .lbl{color:#5c1436}
 
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;align-items:stretch}
-  @media(max-width:860px){.row2{grid-template-columns:1fr}}
+  @media(max-width:1023px){.row2{grid-template-columns:1fr}}
   .rcol{display:flex;flex-direction:column;gap:14px}
   .rcol .card:first-child{flex:1}
   .rcol .card:last-child{flex:none}
@@ -194,14 +199,14 @@
   .card h3{font-size:15.5px;font-weight:700;margin-bottom:14px;text-align:center}
 
   /* histogram */
-  .histo{display:flex;align-items:flex-end;gap:3px;height:48px;padding-top:16px}
+  .histo{display:flex;align-items:flex-end;gap:3px;height:48px;padding-top:16px;width:100%;overflow:hidden}
   .hcol{flex:1;position:relative;display:flex;flex-direction:column;justify-content:flex-end;height:100%}
   .hbar{border-radius:4px;background:#ededf0;width:100%}
   .hbar.median{background:var(--dark)}
   .hbar.you{background:var(--violet)}
   .hcol .mark{position:absolute;top:-2px;left:50%;transform:translateX(-50%)}
   .hcol .mark img{width:14px;height:14px;border-radius:50%;object-fit:cover;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.25);background:#eee}
-  .hfoot{display:flex;gap:3px;margin-top:4px}
+  .hfoot{display:flex;gap:3px;margin-top:4px;width:100%;overflow:hidden}
   .hfoot span{flex:1;text-align:center;font-size:8px;color:#a3a8b3}
   .hdetail{text-align:center;color:var(--muted);font-size:10.5px;margin-top:6px;line-height:1.55}
   .hdetail b{color:var(--text)}
@@ -209,7 +214,7 @@
   /* reels */
   .reel{display:flex;justify-content:space-between;gap:12px;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px}
   .reel:last-child{border-bottom:0}
-  .reel a{color:var(--text);font-weight:500;text-decoration:underline;text-decoration-color:#c9cdd6;text-underline-offset:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:70%}
+  .reel a{color:var(--text);min-width:0;font-weight:500;text-decoration:underline;text-decoration-color:#c9cdd6;text-underline-offset:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:70%}
   .reel a:hover{text-decoration-color:var(--text)}
   .reel .plays{font-weight:700;white-space:nowrap;font-size:13px}
   .mutednote{color:var(--muted);font-size:13.5px}
@@ -217,7 +222,7 @@
   @media(max-width:700px){.chips{justify-content:center}}
   .chip{background:#f1edfb;color:#5b21b6;font-weight:600;font-size:12px;padding:4px 11px;border-radius:999px}
   .chip.ig{background:#e7f3ff;color:#0b6fc2}
-  .bio{color:var(--muted);font-size:12.5px;text-align:right;max-width:52ch;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin:0}
+  .bio{color:var(--muted);font-size:12.5px;text-align:right;max-width:52ch;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin:0;overflow-wrap:anywhere}
   @media(max-width:700px){.bio{text-align:center}}
 
 
@@ -231,7 +236,7 @@
   .tsum .g{background:#e3f6ee;color:var(--good)}
   .tsum .w{background:#fdf3df;color:#8a5a00}
   .tsum .b{background:#fdeaea;color:var(--bad)}
-  .tbasis{color:#9aa0ab;font-size:11.5px;margin-bottom:6px;max-width:34ch;line-height:1.5}
+  .tbasis{color:#9aa0ab;font-size:11.5px;margin-bottom:6px;max-width:34ch;line-height:1.5;overflow-wrap:anywhere}
   #flags{width:100%;max-width:540px;margin:4px auto 0;text-align:left}
   .trustcard .verdict{max-width:40ch}
   .gauge{
@@ -249,7 +254,7 @@
   .flag.warn .dot{background:var(--warn)}
   .flag.bad .dot{background:var(--bad)}
   .flag b{display:block;font-size:14px;margin-bottom:2px}
-  .flag span{color:var(--muted);font-size:13px;line-height:1.55}
+  .flag span{color:var(--muted);font-size:13px;line-height:1.55;overflow-wrap:anywhere}
 
 
   @media(max-width:560px){
@@ -360,7 +365,7 @@
   </section>
 
   <footer>Datenbasis: öffentliches Profil und die letzten Beiträge. Engagement-Benchmarks variieren je nach Nische — nutze das Ergebnis als ersten Filter, nicht als endgültiges Urteil.<br>
-  <a class="credit" href="https://digioners.com" target="_blank" rel="noopener">© Powered by Digioners</a></footer>
+  <a class="credit" href="https://digioners.com" target="_blank" rel="noopener">© Powered by Digioners</a> <span style="opacity:.4">· v3.1</span></footer>
 </main>
 
 <script>
