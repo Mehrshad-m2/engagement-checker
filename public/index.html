@@ -49,7 +49,7 @@
   .searchwrap{position:relative;flex:1}
   input[type=text]{
     width:100%;
-    font:inherit;font-size:15px;
+    font:inherit;font-size:16px;
     padding:12px 16px;
     border:1px solid var(--line);
     border-radius:12px;
@@ -259,6 +259,8 @@
     .reel a{max-width:62%}
     .hd{font-size:13px}
   }
+  .credit{display:inline-block;margin-top:8px;color:#b3b8c2;font-size:10px;text-decoration:none}
+  .credit:hover{color:#7c3aed;text-decoration:underline}
   footer{margin-top:40px;color:#a7acb6;font-size:11px;max-width:64ch;margin-left:auto;margin-right:auto;text-align:center}
 </style>
 </head>
@@ -349,7 +351,8 @@
 
   </section>
 
-  <footer>Datenbasis: öffentliches Profil und die letzten Beiträge. Engagement-Benchmarks variieren je nach Nische — nutze das Ergebnis als ersten Filter, nicht als endgültiges Urteil.</footer>
+  <footer>Datenbasis: öffentliches Profil und die letzten Beiträge. Engagement-Benchmarks variieren je nach Nische — nutze das Ergebnis als ersten Filter, nicht als endgültiges Urteil.<br>
+  <a class="credit" href="https://digioners.com" target="_blank" rel="noopener">© Powered by Digioners</a></footer>
 </main>
 
 <script>
@@ -377,12 +380,7 @@ async function runSearch(q){
     if (q !== lastQuery) return;
     if (data.blocked) {
       blockedCount++;
-      suggBox.innerHTML = `
-        <div class="snote">Instagram blockiert die Schnellsuche auf deiner Verbindung.</div>
-        <button type="button" class="sugg" id="deepBtn"><span>🔎 <b>Konto-Suche über Apify starten</b> — dauert ca. 20–40 Sekunden</span></button>`;
-      openSuggest();
-      document.getElementById("deepBtn").addEventListener("click", () => runDeepSearch(q));
-      return;
+      return closeSuggest();   /* Schnellsuche nicht verfügbar -> einfach nichts anzeigen */
     }
     blockedCount = 0;
     renderUsers(data.users, q);
@@ -412,19 +410,6 @@ function renderUsers(users, q){
   });
 }
 
-async function runDeepSearch(q){
-  suggBox.innerHTML = `<div class="snote">⏳ Apify durchsucht Instagram nach „${esc(q)}" — einen Moment…</div>`;
-  openSuggest();
-  try {
-    const res = await fetch(`/deepsearch?q=${encodeURIComponent(q)}`);
-    const data = await res.json();
-    if (data.error) { suggBox.innerHTML = `<div class="snote">Suche fehlgeschlagen: ${esc(data.error)}</div>`; return openSuggest(); }
-    renderUsers(data.users, q);
-  } catch(e){
-    suggBox.innerHTML = `<div class="snote">Suche fehlgeschlagen — bitte Benutzernamen direkt eingeben.</div>`;
-    openSuggest();
-  }
-}
 
 function pickSuggestion(username){
   input.value = "@" + username;
@@ -478,6 +463,8 @@ form.addEventListener("submit", async (e) => {
   if (!handle) return showError("Das sieht weder nach einem Benutzernamen noch nach einem Instagram-Link aus.");
 
   btn.disabled = true;
+  input.blur();               /* iOS: Fokus-Zoom zurücksetzen */
+  window.scrollTo({ top: 0, left: 0 });
   closeSuggest();
   hideError();
   document.getElementById("report").style.display = "none";
