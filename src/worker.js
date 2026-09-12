@@ -2,6 +2,19 @@
 // Routen: /analyze, /search, /deepsearch, /img — alles andere kommt aus /public (Assets).
 // Secret: APIFY_TOKEN (Worker -> Settings -> Variables and Secrets)
 
+/* Token holen — funktioniert mit klassischem Secret (String)
+   UND mit Secrets-Store-Binding (Objekt mit .get()) */
+async function getApifyToken(env) {
+  const v = env.APIFY_TOKEN;
+  if (!v) return null;
+  if (typeof v === "string") return v.trim();
+  if (typeof v.get === "function") {
+    try { const s = await v.get(); return s ? String(s).trim() : null; }
+    catch (e) { return null; }
+  }
+  return null;
+}
+
 const ACTOR = "apify~instagram-profile-scraper";
 
 export default {
@@ -20,8 +33,8 @@ export default {
 
 /* ---------------- Analyse ---------------- */
 async function analyze(url, env) {
-  const token = env.APIFY_TOKEN;
-  if (!token) return json(500, { error: "APIFY_TOKEN ist in den Worker-Einstellungen nicht gesetzt (Settings → Variables and Secrets)." });
+  const token = await getApifyToken(env);
+  if (!token) return json(500, { error: "APIFY_TOKEN ist nicht gesetzt — als Secrets-Store-Binding oder Secret mit genau diesem Namen anlegen." });
 
   const action = url.searchParams.get("action");
   const username = url.searchParams.get("username");
@@ -114,7 +127,7 @@ async function search(url) {
 
 /* ---------------- Tiefensuche über Apify ---------------- */
 async function deepsearch(url, env) {
-  const token = env.APIFY_TOKEN;
+  const token = await getApifyToken(env);
   if (!token) return json(500, { error: "APIFY_TOKEN ist nicht gesetzt." });
   const q = (url.searchParams.get("q") || "").trim();
   if (q.length < 2) return json(200, { users: [] });
